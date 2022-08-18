@@ -1,4 +1,5 @@
 import sys
+import time
 from pathlib import Path
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[1].as_posix())  # add kapao/ to path
@@ -48,8 +49,8 @@ if __name__ == '__main__':
     parser.add_argument('--start', type=int, default=34, help='start time (s)')
     parser.add_argument('--end', type=int, default=42, help='end time (s), -1 for remainder of video')
     parser.add_argument('--kp-size', type=int, default=2, help='keypoint circle size')
-    parser.add_argument('--kp-thick', type=int, default=2, help='keypoint circle thickness')
-    parser.add_argument('--line-thick', type=int, default=3, help='line thickness')
+    parser.add_argument('--kp-thick', type=int, default=3, help='keypoint circle thickness')
+    parser.add_argument('--line-thick', type=int, default=1, help='line thickness')
     parser.add_argument('--alpha', type=float, default=0.4, help='pose alpha')
     parser.add_argument('--kp-obj', action='store_true', help='plot keypoint objects only')
     parser.add_argument('--csv', action='store_true', help='write results so csv file')
@@ -60,12 +61,12 @@ if __name__ == '__main__':
     parser.add_argument('--weights', default='kapao_s_coco.pt')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or cpu')
     parser.add_argument('--half', action='store_true')
-    parser.add_argument('--conf-thres', type=float, default=0.5, help='confidence threshold')
+    parser.add_argument('--conf-thres', type=float, default=0.3, help='confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold')
     parser.add_argument('--no-kp-dets', action='store_true', help='do not use keypoint objects')
-    parser.add_argument('--conf-thres-kp', type=float, default=0.5)
+    parser.add_argument('--conf-thres-kp', type=float, default=0.3)
     parser.add_argument('--conf-thres-kp-person', type=float, default=0.2)
-    parser.add_argument('--iou-thres-kp', type=float, default=0.45)
+    parser.add_argument('--iou-thres-kp', type=float, default=0.35)
     parser.add_argument('--overwrite-tol', type=int, default=50)
     parser.add_argument('--scales', type=float, nargs='+', default=[1])
     parser.add_argument('--flips', type=int, nargs='+', default=[-1])
@@ -148,6 +149,7 @@ if __name__ == '__main__':
 
     dataset = tqdm(dataset, desc='Running inference', total=n)
     t0 = time_sync()
+    b_time = time.time()
     for i, (path, img, im0, _) in enumerate(dataset):
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -213,7 +215,8 @@ if __name__ == '__main__':
     cap.release()
     if write_video:
         writer.release()
-
+    e_time = time.time()
+    print('total time----', e_time - b_time)
     if args.gif:
         print('Saving GIF...')
         with imageio.get_writer(out_path + '.gif', mode="I", fps=fps) as writer:
